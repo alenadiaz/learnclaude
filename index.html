@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Claude Classroom</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FBF4EE;
+    --paper-2:#F6E9DF;
+    --blush:#F8E6DC;
+    --ink:#2E2230;
+    --ink-soft:#74606C;
+    --night:#241826;
+    --night-2:#3C2840;
+    --guava:#E0654C;
+    --guava-deep:#C24E38;
+    --gold:#D9A441;
+    --gold-soft:#EEC983;
+    --line:#E7D6C8;
+    --line-night:rgba(255,255,255,.14);
+    --shadow:0 18px 50px -28px rgba(46,34,48,.45);
+    --maxw:760px;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    font-family:"Hanken Grotesk",system-ui,sans-serif;
+    color:var(--ink);
+    background:var(--paper);
+    -webkit-font-smoothing:antialiased;
+    line-height:1.6;
+  }
+  a{color:var(--guava-deep);text-decoration:none;border-bottom:1px solid rgba(194,78,56,.3);}
+  a:hover{border-bottom-color:var(--guava-deep);}
+
+  /* ---------- Layout ---------- */
+  .app{display:grid;grid-template-columns:312px 1fr;min-height:100vh;}
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    background:linear-gradient(190deg,var(--night) 0%, var(--night-2) 100%);
+    color:#F3E8E2;
+    padding:30px 26px 26px;
+    position:sticky;top:0;height:100vh;
+    display:flex;flex-direction:column;
+    overflow-y:auto;
+  }
+  .brand-eyebrow{
+    font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--gold-soft);font-weight:600;margin:0 0 6px;
+  }
+  .brand-title{
+    font-family:"Fraunces",serif;font-weight:600;font-size:27px;line-height:1.1;
+    margin:0 0 4px;color:#FCF4EE;
+    font-variation-settings:"SOFT" 60,"opsz" 40;
+  }
+  .brand-sub{font-size:13px;color:rgba(243,232,226,.62);margin:0 0 26px;}
+
+  .nav{position:relative;flex:1;}
+  .path-track,.path-fill{
+    position:absolute;left:11px;top:14px;bottom:14px;width:2px;
+    background:var(--line-night);border-radius:2px;
+  }
+  .path-fill{
+    bottom:auto;height:0;
+    background:linear-gradient(180deg,var(--gold-soft),var(--guava));
+    transition:height .6s cubic-bezier(.4,0,.2,1);
+    box-shadow:0 0 12px rgba(217,164,65,.5);
+  }
+  .nav-list{list-style:none;margin:0;padding:0;position:relative;z-index:1;}
+  .nav-item{margin:0;}
+  .nav-btn{
+    width:100%;border:0;background:none;cursor:pointer;
+    display:flex;align-items:center;gap:13px;
+    padding:9px 10px 9px 0;color:rgba(243,232,226,.74);
+    font-family:inherit;font-size:14.5px;text-align:left;border-radius:10px;
+    transition:color .2s,background .2s;
+  }
+  .nav-btn:hover{color:#fff;background:rgba(255,255,255,.05);}
+  .nav-btn .node{
+    flex:0 0 24px;height:24px;border-radius:50%;
+    border:2px solid rgba(255,255,255,.28);
+    background:var(--night);
+    display:flex;align-items:center;justify-content:center;
+    transition:all .3s ease;position:relative;
+  }
+  .nav-btn .node svg{width:12px;height:12px;opacity:0;transform:scale(.4);transition:.3s;}
+  .nav-item.done .node{border-color:var(--gold);background:linear-gradient(160deg,var(--gold-soft),var(--gold));box-shadow:0 0 0 4px rgba(217,164,65,.18);}
+  .nav-item.done .node svg{opacity:1;transform:scale(1);}
+  .nav-item.done .nav-btn{color:rgba(243,232,226,.92);}
+  .nav-item.active .nav-btn{color:#fff;font-weight:600;background:rgba(255,255,255,.07);}
+  .nav-item.active .node{border-color:var(--guava);box-shadow:0 0 0 5px rgba(224,101,76,.22);}
+  .nav-item.active.done .node{border-color:var(--gold);}
+  .nav-num{font-size:11px;color:rgba(243,232,226,.4);width:14px;flex:0 0 14px;font-variant-numeric:tabular-nums;}
+
+  .progress-box{margin-top:22px;padding-top:20px;border-top:1px solid var(--line-night);}
+  .progress-row{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;letter-spacing:.04em;color:rgba(243,232,226,.7);text-transform:uppercase;margin-bottom:9px;}
+  .progress-pct{font-family:"Fraunces",serif;font-size:17px;color:var(--gold-soft);font-weight:600;letter-spacing:0;text-transform:none;}
+  .progress-bar{height:7px;border-radius:99px;background:rgba(255,255,255,.13);overflow:hidden;}
+  .progress-bar span{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--gold-soft),var(--guava));transition:width .6s cubic-bezier(.4,0,.2,1);}
+  .reset-btn{margin-top:14px;background:none;border:0;color:rgba(243,232,226,.45);font-family:inherit;font-size:12px;cursor:pointer;padding:0;}
+  .reset-btn:hover{color:var(--gold-soft);text-decoration:underline;}
+
+  /* ---------- Mobile top bar ---------- */
+  .topbar{display:none;}
+  .scrim{display:none;}
+
+  /* ---------- Main ---------- */
+  .main{padding:0;}
+  .lesson{max-width:var(--maxw);margin:0 auto;padding:64px 40px 110px;animation:rise .5s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:none;}}
+
+  .eyebrow{
+    font-size:12px;letter-spacing:.22em;text-transform:uppercase;font-weight:600;
+    color:var(--guava-deep);margin:0 0 14px;display:flex;align-items:center;gap:10px;
+  }
+  .eyebrow::before{content:"";width:26px;height:2px;background:var(--guava);border-radius:2px;}
+  h1.title{
+    font-family:"Fraunces",serif;font-weight:600;font-size:clamp(34px,5vw,48px);
+    line-height:1.06;margin:0 0 16px;letter-spacing:-.01em;
+    font-variation-settings:"SOFT" 50,"opsz" 144;
+  }
+  .lede{font-size:19px;color:var(--ink-soft);margin:0 0 8px;line-height:1.55;}
+  .divider{height:1px;background:var(--line);border:0;margin:36px 0;}
+
+  .lesson h3{
+    font-family:"Fraunces",serif;font-weight:600;font-size:24px;line-height:1.2;
+    margin:42px 0 14px;letter-spacing:-.01em;font-variation-settings:"SOFT" 40,"opsz" 80;
+  }
+  .lesson h4{font-size:16px;font-weight:700;margin:26px 0 8px;letter-spacing:.01em;}
+  .lesson p{margin:0 0 16px;font-size:17px;}
+  .lesson strong{font-weight:700;color:var(--ink);}
+  .lesson em{font-style:italic;}
+  .lesson ul{margin:0 0 20px;padding:0;list-style:none;}
+  .lesson ul li{
+    position:relative;padding:0 0 0 26px;margin:0 0 12px;font-size:17px;
+  }
+  .lesson ul li::before{
+    content:"";position:absolute;left:2px;top:11px;width:8px;height:8px;border-radius:50%;
+    background:var(--guava);box-shadow:0 0 0 3px var(--blush);
+  }
+  .lesson ol{margin:0 0 20px;padding-left:0;counter-reset:step;list-style:none;}
+  .lesson ol li{position:relative;padding:2px 0 14px 46px;margin:0;counter-increment:step;font-size:17px;}
+  .lesson ol li::before{
+    content:counter(step);position:absolute;left:0;top:0;
+    width:30px;height:30px;border-radius:50%;background:var(--ink);color:var(--paper);
+    font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;
+    font-family:"Fraunces",serif;
+  }
+
+  /* prompt example card */
+  .prompt-card{
+    background:var(--night);color:#F4EAE3;border-radius:18px;padding:24px 26px;margin:24px 0;
+    position:relative;box-shadow:var(--shadow);
+  }
+  .prompt-card .pc-label{
+    font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold-soft);
+    font-weight:600;margin:0 0 12px;
+  }
+  .prompt-card .pc-body{font-size:16px;line-height:1.6;color:#F4EAE3;font-style:italic;margin:0;}
+  .prompt-card .pc-body strong{color:#fff;font-style:normal;font-weight:700;}
+  .copy-btn{
+    margin-top:16px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);
+    color:#F4EAE3;font-family:inherit;font-size:13px;font-weight:600;
+    padding:7px 14px;border-radius:99px;cursor:pointer;transition:.2s;display:inline-flex;gap:7px;align-items:center;
+  }
+  .copy-btn:hover{background:rgba(255,255,255,.18);}
+  .copy-btn.copied{background:var(--gold);color:var(--night);border-color:var(--gold);}
+
+  /* callouts */
+  .callout{border-radius:18px;padding:26px 28px;margin:30px 0;border:1px solid var(--line);}
+  .callout .co-tag{
+    display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;
+    letter-spacing:.12em;text-transform:uppercase;padding:5px 12px;border-radius:99px;margin-bottom:14px;
+  }
+  .callout h4{margin:0 0 12px;font-size:20px;font-family:"Fraunces",serif;font-weight:600;}
+  .callout p,.callout li{font-size:16px;}
+  .callout :last-child{margin-bottom:0;}
+  .callout.homework{background:var(--blush);border-color:#EFCDBE;}
+  .callout.homework .co-tag{background:var(--guava);color:#fff;}
+  .callout.challenge{background:linear-gradient(160deg,#FBEFD6,#F6E3D4);border-color:#EAD3A6;}
+  .callout.challenge .co-tag{background:var(--gold);color:var(--night);}
+  .post-title{font-weight:700;color:var(--guava-deep);}
+
+  /* generic info note */
+  .note{background:var(--paper-2);border-left:3px solid var(--gold);border-radius:0 12px 12px 0;padding:14px 18px;margin:22px 0;font-size:15.5px;color:var(--ink-soft);}
+  .note strong{color:var(--ink);}
+
+  /* steps with video links */
+  .step-link{display:inline-block;margin-left:8px;font-size:13px;font-weight:600;color:var(--guava-deep);}
+
+  /* ---------- Prompt Builder (interactive) ---------- */
+  .builder{
+    background:#fff;border:1px solid var(--line);border-radius:20px;padding:26px;margin:30px 0;
+    box-shadow:0 14px 40px -30px rgba(46,34,48,.5);
+  }
+  .builder h4{margin:0 0 4px;font-family:"Fraunces",serif;font-size:21px;font-weight:600;}
+  .builder .b-sub{font-size:14.5px;color:var(--ink-soft);margin:0 0 20px;}
+  .b-field{margin-bottom:16px;}
+  .b-field label{display:block;font-size:13px;font-weight:700;letter-spacing:.02em;margin-bottom:6px;}
+  .b-field label span{font-weight:400;color:var(--ink-soft);}
+  .b-field textarea,.b-field input{
+    width:100%;font-family:inherit;font-size:15px;color:var(--ink);
+    border:1.5px solid var(--line);border-radius:11px;padding:11px 13px;background:var(--paper);
+    resize:vertical;transition:border-color .2s,box-shadow .2s;
+  }
+  .b-field textarea{min-height:54px;}
+  .b-field textarea:focus,.b-field input:focus{outline:none;border-color:var(--guava);box-shadow:0 0 0 3px rgba(224,101,76,.15);}
+  .b-actions{display:flex;gap:10px;flex-wrap:wrap;margin:6px 0 20px;}
+  .b-btn{font-family:inherit;font-size:14px;font-weight:600;border-radius:99px;padding:9px 18px;cursor:pointer;border:1.5px solid var(--ink);background:none;color:var(--ink);transition:.2s;}
+  .b-btn:hover{background:var(--ink);color:var(--paper);}
+  .b-btn.ghost{border-color:var(--line);color:var(--ink-soft);}
+  .b-btn.ghost:hover{background:var(--paper-2);color:var(--ink);border-color:var(--line);}
+  .b-output{
+    background:var(--night);color:#F4EAE3;border-radius:14px;padding:20px 22px;
+    font-size:15px;line-height:1.6;white-space:pre-wrap;min-height:60px;
+  }
+  .b-output .ph{color:rgba(244,234,227,.4);font-style:italic;}
+  .b-output-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+  .b-output-bar .lbl{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold-soft);font-weight:600;}
+
+  /* lesson footer nav */
+  .lesson-foot{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-top:50px;padding-top:30px;border-top:1px solid var(--line);flex-wrap:wrap;}
+  .complete-btn{
+    font-family:inherit;font-size:15px;font-weight:700;border:0;cursor:pointer;
+    padding:13px 26px;border-radius:99px;background:var(--guava);color:#fff;
+    display:inline-flex;align-items:center;gap:9px;transition:.2s;box-shadow:0 10px 24px -12px rgba(224,101,76,.7);
+  }
+  .complete-btn:hover{background:var(--guava-deep);transform:translateY(-1px);}
+  .complete-btn.is-done{background:var(--gold);color:var(--night);box-shadow:none;}
+  .complete-btn svg{width:16px;height:16px;}
+  .foot-nav{display:flex;gap:8px;}
+  .foot-nav button{
+    font-family:inherit;font-size:14px;font-weight:600;background:none;border:1.5px solid var(--line);
+    color:var(--ink);border-radius:99px;padding:10px 18px;cursor:pointer;transition:.2s;
+  }
+  .foot-nav button:hover:not(:disabled){border-color:var(--ink);}
+  .foot-nav button:disabled{opacity:.35;cursor:default;}
+
+  /* finish banner */
+  .finish{display:none;background:linear-gradient(160deg,var(--night),var(--night-2));color:#F4EAE3;border-radius:18px;padding:26px 28px;margin:30px 0 0;text-align:center;}
+  .finish.show{display:block;animation:rise .5s ease both;}
+  .finish h4{font-family:"Fraunces",serif;font-size:22px;margin:0 0 8px;color:#fff;}
+  .finish p{margin:0;color:rgba(244,234,227,.8);font-size:15.5px;}
+
+  :focus-visible{outline:3px solid var(--guava);outline-offset:2px;border-radius:6px;}
+
+  /* ---------- Responsive ---------- */
+  @media (max-width:880px){
+    .app{grid-template-columns:1fr;}
+    .topbar{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+      position:sticky;top:0;z-index:30;background:var(--night);color:#F4EAE3;
+      padding:14px 18px;
+    }
+    .topbar .tb-brand{font-family:"Fraunces",serif;font-weight:600;font-size:18px;}
+    .topbar .tb-brand small{display:block;font-family:"Hanken Grotesk",sans-serif;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-soft);font-weight:600;}
+    .hamburger{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#F4EAE3;border-radius:10px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+    .hamburger svg{width:22px;height:22px;}
+    .sidebar{
+      position:fixed;top:0;left:0;z-index:50;width:300px;max-width:86vw;height:100vh;
+      transform:translateX(-105%);transition:transform .3s cubic-bezier(.4,0,.2,1);
+    }
+    body.nav-open .sidebar{transform:translateX(0);box-shadow:0 0 60px rgba(0,0,0,.4);}
+    .scrim{display:block;position:fixed;inset:0;background:rgba(36,24,38,.55);z-index:40;opacity:0;pointer-events:none;transition:opacity .3s;}
+    body.nav-open .scrim{opacity:1;pointer-events:auto;}
+    .lesson{padding:40px 22px 90px;}
+    h1.title{font-size:clamp(30px,8vw,40px);}
+    .lesson p,.lesson ul li,.lesson ol li{font-size:16px;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important;scroll-behavior:auto;}
+  }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="tb-brand"><small>The Classroom</small>Learn Claude</div>
+  <button class="hamburger" id="hamburger" aria-label="Open course menu" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+  </button>
+</div>
+<div class="scrim" id="scrim"></div>
+
+<div class="app">
+  <aside class="sidebar" aria-label="Course modules">
+    <p class="brand-eyebrow">The Classroom</p>
+    <h1 class="brand-title">Learn Claude,<br>Build Your Business</h1>
+    <p class="brand-sub">A hands-on course in using Claude &amp; thinking in prompts.</p>
+
+    <nav class="nav">
+      <div class="path-track"></div>
+      <div class="path-fill" id="pathFill"></div>
+      <ul class="nav-list" id="navList"></ul>
+    </nav>
+
+    <div class="progress-box">
+      <div class="progress-row"><span>Your progress</span><span class="progress-pct" id="pct">0%</span></div>
+      <div class="progress-bar"><span id="bar"></span></div>
+      <button class="reset-btn" id="reset">Reset progress</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <article class="lesson" id="lesson"></article>
+  </main>
+</div>
+
+<script>
+/* ============================================================
+   THE CLAUDE CLASSROOM — single-file course (vanilla JS)
+   ============================================================ */
+
+/* ---- safe storage (works on GitHub Pages; degrades gracefully) ---- */
+const Store = (function(){
+  let mem = {}, ok = false;
+  try { const k="__cc_test"; localStorage.setItem(k,"1"); localStorage.removeItem(k); ok = true; }
+  catch(e){ ok = false; }
+  return {
+    get(k){ try { return ok ? localStorage.getItem(k) : (mem[k] ?? null); } catch(e){ return mem[k] ?? null; } },
+    set(k,v){ try { ok ? localStorage.setItem(k,v) : (mem[k]=v); } catch(e){ mem[k]=v; } }
+  };
+})();
+
+const check = '<svg viewBox="0 0 24 24" fill="none" stroke="#241826" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+const checkW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+const copyIcon = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+
+/* ---- helper for the dark example-prompt cards ---- */
+function promptCard(label, html){
+  return `<div class="prompt-card">
+    <p class="pc-label">${label}</p>
+    <p class="pc-body">${html}</p>
+    <button class="copy-btn" data-copy>${copyIcon}<span>Copy prompt</span></button>
+  </div>`;
+}
+
+/* ============================================================
+   COURSE CONTENT
+   ============================================================ */
+const MODULES = [
+{
+  id:"welcome",
+  nav:"Start Here",
+  eyebrow:"Start Here",
+  title:"Welcome to the Classroom",
+  lede:"Before this week, Claude probably feels like a clever toy. By the end of this course, it's going to feel like a team member who never sleeps — and you're the one who knows how to brief it.",
+  body:`
+    <p>This is a do-it-as-you-go course, not a watch-and-forget one. Each module is short, plain-English, and ends with homework you actually run on <strong>your</strong> business. The order matters — every module makes the next one stronger — so start at the top and work down.</p>
+
+    <h3>How to use this classroom</h3>
+    <ul>
+      <li><strong>Read a module, then do its homework.</strong> The reading is the trailer; the homework is the movie. Skipping it is like reading the recipe and never cooking.</li>
+      <li><strong>Mark each module complete</strong> using the button at the bottom. The journey on the left fills with light as you go — that glow is you, levelling up.</li>
+      <li><strong>Post your homework in the community</strong> using the titles given in each module (e.g. <span class="post-title">📝 CLAUDE 101 HOMEWORK — [Your Name]</span>). That's how we cheer you on.</li>
+    </ul>
+
+    <div class="note"><strong>You don't need to pay yet.</strong> The free plan at <a href="https://claude.ai" target="_blank" rel="noopener">claude.ai</a> is plenty to complete this course. The paid features (Projects, more Artifacts) come up later — upgrade when you feel the limits, not before.</div>
+
+    <h3>Your path</h3>
+    <p>Six lessons take you from "what even is this thing" to building a working tool and putting it live on the internet:</p>
+    <ul>
+      <li><strong>Claude 101</strong> — what Claude is, and the one mindset shift that changes everything.</li>
+      <li><strong>Prompts</strong> — the 5-part recipe, plus a builder to practise on.</li>
+      <li><strong>Projects / Business HQ</strong> — stop re-explaining your business every single chat.</li>
+      <li><strong>The Onboarding Skill</strong> — turn setup into a repeatable, one-click ritual.</li>
+      <li><strong>Skills</strong> — install marketing frameworks Claude follows forever.</li>
+      <li><strong>Artifacts</strong> — go from Claude <em>writing</em> things to Claude <em>building</em> things.</li>
+    </ul>
+    <p>Then a bonus how-to for <strong>hosting what you build on GitHub</strong>, free, with a real link you can share.</p>
+    <p>That's the whole map. Hit <strong>Claude 101</strong> when you're ready. Let's go.</p>
+  `
+},
+{
+  id:"claude101",
+  nav:"Claude 101",
+  eyebrow:"Module 01",
+  title:"So… what actually IS Claude?",
+  lede:"Imagine sitting down for coffee with someone who has read basically everything — every marketing book, every business case study, every \u201Chow to write a sales page\u201D guide ever published — who never gets tired, never judges your questions, and is available at 11pm when you finally get the kids down and open your laptop. That is Claude.",
+  body:`
+    <p>Technically? Claude is an AI assistant made by a company called Anthropic. You type to it like you would text a friend, and it types back. That is genuinely the whole interface. If you can send a WhatsApp message, you are qualified.</p>
+
+    <p>And here is the bit I need you to hear, because it changes how you use everything in this classroom: <strong>Claude is not a search engine.</strong> Google finds you a page someone else wrote. Claude does the work WITH you — it writes, edits, plans, brainstorms, calculates, and pushes back on your ideas. You do not \u201Clook things up\u201D with Claude. You collaborate with it. Big difference. Huge.</p>
+
+    <h3>Getting started (two minutes, tops)</h3>
+    <ul>
+      <li>Go to <a href="https://claude.ai" target="_blank" rel="noopener"><strong>claude.ai</strong></a> and sign up: email or Google account, your pick.</li>
+      <li>You will land in a chat window with a box that says something like \u201CHow can I help you today?\u201D That box is about to become your favourite place on the internet.</li>
+      <li>Grab the mobile app too, because ideas do not wait for office hours and neither should you.</li>
+      <li>The free plan is plenty for this course. When Claude becomes the most-used member of your team — and it will — the paid plan removes the limits and unlocks the features we use in the later courses (Projects, more Artifacts, the works).</li>
+    </ul>
+
+    <h3>What Claude is brilliant at <span style="font-weight:400;font-size:16px;color:var(--ink-soft)">(a.k.a. your new job description for it)</span></h3>
+    <ul>
+      <li><strong>Writing and rewriting:</strong> emails, captions, sales pages, bios, blog posts, awkward \u201Cjust following up\u201D messages you have been avoiding.</li>
+      <li><strong>Thinking out loud:</strong> paste in your messy brain-dump and ask it to find the actual point. It is scary good at this.</li>
+      <li><strong>Planning:</strong> launches, content calendars, project timelines, \u201Cwhat should I do first\u201D conversations.</li>
+      <li><strong>Reading things for you:</strong> upload a PDF, a contract, a spreadsheet, a competitor\u2019s page, and ask questions about it like it is a person who read it.</li>
+      <li><strong>Being your sounding board:</strong> \u201Chere is my offer, poke holes in it\u201D is one of the most valuable prompts in existence and almost nobody uses it.</li>
+    </ul>
+
+    <h3>Where Claude gets it wrong <span style="font-weight:400;font-size:16px;color:var(--ink-soft)">(read this twice)</span></h3>
+    <p>I love Claude. You are going to love Claude. AND Claude can confidently get things wrong. It can state a \u201Cfact\u201D that is not a fact, invent a statistic, or misremember a detail — all with a completely straight face. The fancy word is \u201Challucination.\u201D The practical rule is simpler:</p>
+    <div class="note"><strong>Claude drafts, YOU decide.</strong> Anything factual — numbers, names, claims, legal stuff, medical stuff, prices — gets checked by a human (that is you) before it goes anywhere near your audience.</div>
+
+    <h4>Two more honest truths</h4>
+    <ul>
+      <li><strong>One:</strong> each chat is its own little bubble. Start a new chat and Claude does not automatically remember the last one — which is exactly why Claude Projects exists later in your path.</li>
+      <li><strong>Two:</strong> do not paste in anything you would not want outside your business — other people\u2019s private details, passwords, the genuinely sensitive stuff. Same common sense you would use with any online tool.</li>
+    </ul>
+
+    <h3>The golden rule of talking to Claude</h3>
+    <p>Talk to it like a smart new team member on her first day, not like a vending machine. \u201CWrite me an email\u201D gets you vending-machine output. But this?</p>
+    ${promptCard("Try a prompt like this","<strong>I run a postpartum fitness coaching business for new mums. I need a warm, non-salesy email to past clients letting them know I have three 1:1 spots opening in July. My vibe is big-sister energy, not drill sergeant. Keep it under 150 words.</strong>")}
+    <p>THAT gets you something you would actually send. Context in, quality out. We go deep on this in the next module — consider this your trailer.</p>
+
+    <div class="callout homework">
+      <span class="co-tag">📝 Your Homework</span>
+      <h4>Have these three conversations this week</h4>
+      <p>Not someday. This week.</p>
+      <ul>
+        <li><strong>The Brain Dump.</strong> Tell Claude everything swirling in your head about your business right now — messy is fine, messy is the point — and end with: \u201COrganise this into my top 3 priorities and tell me what to do first.\u201D</li>
+        <li><strong>The Rewrite.</strong> Paste in something you already wrote (a caption, an email, your About page) and say: \u201CRewrite this in 3 different tones: warmer, punchier, and more premium.\u201D Watch what happens.</li>
+        <li><strong>The Devil\u2019s Advocate.</strong> Describe your main offer and ask: \u201CWhat questions or doubts would a sceptical potential client have? Be brutally honest.\u201D Bring tissues. And a notebook.</li>
+      </ul>
+      <p>Post your favourite moment from any of the three in the community, titled <span class="post-title">📝 CLAUDE 101 HOMEWORK — [Your Name]</span>.</p>
+    </div>
+  `
+},
+{
+  id:"prompts",
+  nav:"Prompts",
+  eyebrow:"Module 02",
+  title:"How to think about prompting",
+  lede:"Real talk. When someone tells me \u201CI tried AI and the output was generic,\u201D nine times out of ten it goes like this. I ask: \u201CWhat did you type in?\u201D They say: \u201CWrite me an Instagram caption.\u201D And I am like — babe. BABE.",
+  body:`
+    <p>You gave a stranger six words and expected her to read your mind, know your business, your audience, your vibe, AND your offer. Even your best friend could not do that, and she has known you for fifteen years.</p>
+    <p>Claude is not generic. <strong>Vague is generic.</strong> The moment you learn to ask properly, the output stops sounding like AI and starts sounding like YOU on your best day. That is what this module is for. Let\u2019s go.</p>
+
+    <h3>The 5-part prompt recipe <span style="font-weight:400;font-size:16px;color:var(--ink-soft)">(memorise this)</span></h3>
+    <p>Every great business prompt has up to five ingredients. You will not always need all five — but when output disappoints you, one of these is missing. Promise.</p>
+    <ul>
+      <li><strong>Context</strong> — who you are, who you serve, what your business is. \u201CI am a wedding photographer for elopements in coastal Australia\u201D changes EVERYTHING that follows.</li>
+      <li><strong>Task</strong> — what exactly you want. Not \u201Chelp with marketing.\u201D Try: \u201Cwrite 5 hook options for a reel about why small weddings photograph better.\u201D</li>
+      <li><strong>Tone &amp; style</strong> — how it should sound. Warm? Cheeky? Premium and quiet? Give it adjectives, or better, say \u201Cmatch the voice in this example\u201D and paste something you love.</li>
+      <li><strong>Format</strong> — what shape the answer takes. A list? A table? 150 words max? Three options to choose from? Say so, or Claude will guess.</li>
+      <li><strong>Examples</strong> — show, don\u2019t just tell. Paste a caption that performed well and say \u201Cmore like this.\u201D Examples are the fastest shortcut to \u201Csounds like me\u201D that exists.</li>
+    </ul>
+
+    <h4>Watch the recipe in action</h4>
+    ${promptCard("All five ingredients at once","<strong>You are helping me, a money mindset coach for women freelancers (context). Write a welcome email for new subscribers who downloaded my free budgeting template (task). Tone is big-sister-who-has-her-life-together \u2014 warm, direct, zero finance-bro energy (tone). Under 200 words, with one clear next step at the end (format). Here is a past email my list loved, match this voice: [paste] (example).</strong>")}
+    <p>Compare that to \u201Cwrite me a welcome email.\u201D It is not even close. It is option B every day of the week.</p>
+
+    <h3>The follow-up: where the real magic lives</h3>
+    <p>Here is the mindset shift nobody tells beginners: <strong>the first answer is the first draft, not the final answer.</strong> Claude is a conversation, not a slot machine. You do not pull the lever once and walk away — you coach the draft. My favourite follow-up moves:</p>
+    <ul>
+      <li><strong>\u201CMake it warmer / punchier / shorter / less salesy.\u201D</strong> Direction words work instantly.</li>
+      <li><strong>\u201CGive me 5 more options, wildly different from each other.\u201D</strong> Forces range instead of variations on one idea.</li>
+      <li><strong>\u201CWhat questions do you need to ask me to make this better?\u201D</strong> Flips the script — Claude interviews YOU. Criminally underused.</li>
+      <li><strong>\u201CNow critique your own draft like a sceptical customer would.\u201D</strong> Claude is a surprisingly honest critic of its own work.</li>
+      <li><strong>\u201CThis line is perfect: [paste]. Make the rest match its energy.\u201D</strong> Anchor on what is working.</li>
+    </ul>
+
+    <h3>One more power move: give Claude a role</h3>
+    <p>Start a prompt with \u201CAct as…\u201D and watch the quality jump. \u201CAct as a direct-response copywriter reviewing my sales page.\u201D \u201CAct as my ideal client — a burnt-out corporate mum — and react to this offer.\u201D \u201CAct as a ruthless editor and cut 30% of this without losing the heart.\u201D Roles give Claude a lens, and a lens gives you sharper output. <em>(In the Skills module we take this idea and put it on steroids — installing entire marketing frameworks as permanent skills. Open loop? Open loop. See you there.)</em>
+
+    <h3>Try it: the Prompt Builder</h3>
+    <p>Don\u2019t just read the recipe — cook with it. Fill in as many ingredients as you like and watch a real, send-it prompt assemble itself below. Tap <strong>Load example</strong> to see the money-mindset email from above, or build your own from scratch.</p>
+
+    <div class="builder">
+      <h4>Build a 5-part prompt</h4>
+      <p class="b-sub">The more you give it, the better it gets. Empty fields are simply left out.</p>
+
+      <div class="b-field">
+        <label>Role <span>— optional, the \u201CAct as…\u201D lens</span></label>
+        <input id="b-role" type="text" placeholder="a direct-response copywriter">
+      </div>
+      <div class="b-field">
+        <label>Context <span>— who you are &amp; who you serve</span></label>
+        <textarea id="b-context" placeholder="I'm a money mindset coach for women freelancers."></textarea>
+      </div>
+      <div class="b-field">
+        <label>Task <span>— exactly what you want</span></label>
+        <textarea id="b-task" placeholder="Write a welcome email for new subscribers who downloaded my free budgeting template."></textarea>
+      </div>
+      <div class="b-field">
+        <label>Tone &amp; style <span>— how it should sound</span></label>
+        <textarea id="b-tone" placeholder="Big-sister-who-has-her-life-together: warm, direct, zero finance-bro energy."></textarea>
+      </div>
+      <div class="b-field">
+        <label>Format <span>— the shape of the answer</span></label>
+        <textarea id="b-format" placeholder="Under 200 words, with one clear next step at the end."></textarea>
+      </div>
+      <div class="b-field">
+        <label>Examples <span>— paste something to match</span></label>
+        <textarea id="b-examples" placeholder="Here's a past email my list loved, match this voice: [paste]"></textarea>
+      </div>
+
+      <div class="b-actions">
+        <button class="b-btn ghost" id="b-load">Load example</button>
+        <button class="b-btn ghost" id="b-clear">Clear all</button>
+      </div>
+
+      <div class="b-output-bar">
+        <span class="lbl">Your assembled prompt</span>
+        <button class="copy-btn" id="b-copy" style="margin-top:0;background:var(--paper-2);color:var(--ink);border-color:var(--line);">${copyIcon}<span>Copy</span></button>
+      </div>
+      <div class="b-output" id="b-output"><span class="ph">Start filling fields above and your prompt appears here…</span></div>
+    </div>
+
+    <div class="callout homework">
+      <span class="co-tag">📝 Your Homework</span>
+      <h4>Build your Personal Prompt Bank</h4>
+      <p>A note on your phone or a doc with 5 prompts, written with the full recipe, for the 5 tasks you do most. For most of us that is something like:</p>
+      <ul>
+        <li>A content prompt (captions, reels, posts)</li>
+        <li>An email prompt (newsletter or nurture)</li>
+        <li>A sales-y prompt (DMs, offers, pitches)</li>
+        <li>A planning prompt (weekly priorities, launch steps)</li>
+        <li>A \u201Cfix my writing\u201D prompt (rewrite and tone-match)</li>
+      </ul>
+      <p>Test every single one in Claude — no untested prompts in the bank, that is the rule. Post your best one in the community titled <span class="post-title">📝 PROMPT BANK — [Your Name]</span> so we can all steal… I mean, be inspired by each other.</p>
+    </div>
+  `
+},
+{
+  id:"projects",
+  nav:"Projects / HQ",
+  eyebrow:"Module 03",
+  title:"The re-explaining tax ends today",
+  lede:"By now you know the pattern: Claude\u2019s output quality runs on context. The more it knows about your business, the better everything gets. And you have been hand-feeding that context chat after chat after chat, like some kind of context waitress. Enough. Today we automate it.",
+  body:`
+    <p>A <strong>Project</strong> is a dedicated workspace inside Claude (a paid-plan feature, and honestly the reason to upgrade) with two superpowers:</p>
+    <ul>
+      <li><strong>Project knowledge</strong> — files and documents you upload ONCE that Claude reads in every conversation inside that project. Your offers. Your brand voice guide. Your audience notes. Permanently on tap.</li>
+      <li><strong>Custom instructions</strong> — standing orders for how Claude behaves in this project. \u201CAlways write in my voice: warm, direct, lightly cheeky. Never use corporate buzzwords. Always ask one clarifying question before long drafts.\u201D Set once, obeyed always.</li>
+    </ul>
+    <p>Plus all your chats on that topic live together in one tidy place, instead of scattered through your history like socks through a teenager\u2019s bedroom.</p>
+
+    <h3>Build your Business HQ <span style="font-weight:400;font-size:16px;color:var(--ink-soft)">(the walkthrough)</span></h3>
+    <ol>
+      <li><strong>Create the project.</strong> In Claude, hit Projects → New Project. Name it \u201C[Your Business] HQ\u201D. Feels good already, right?</li>
+      <li><strong>Write your Business Brief.</strong> One document, the soul of your business: who you are, who you serve, your offers and prices, your origin story, your voice (with 2–3 examples of writing that sounds like you), and what you are focused on this quarter. Do not have one? Ask Claude in a normal chat: \u201CInterview me one question at a time to build a complete business brief document.\u201D Twenty minutes, done forever.</li>
+      <li><strong>Upload your knowledge.</strong> Add the brief to project knowledge, plus your best-performing content, your sales page copy, client FAQs, testimonials — anything Claude should \u201Cjust know.\u201D</li>
+      <li><strong>Set custom instructions.</strong> Tell Claude how to behave here: your voice rules, your formatting preferences, your no-go words (mine include \u201Cunleash\u201D and \u201Cgame-changer,\u201D and I will die on this hill).</li>
+      <li><strong>Test drive it.</strong> Open a new chat INSIDE the project and ask for a sales email — with zero context in your message. When it comes back knowing your offer, your audience and your voice… that noise you just made? That is the sound of the re-explaining tax being abolished. 🎉</li>
+    </ol>
+
+    <h3>Projects that pay for themselves</h3>
+    <p>Once your HQ exists, you will start seeing projects everywhere. The ones my members swear by: a <strong>Launch project</strong> (strategy, dates, all assets in one room), a <strong>Content engine</strong> (voice guide + best posts + pillars, so every caption sounds like you), and a <strong>Client delivery project</strong> per big client or program. One topic, one project, one rule: keep the knowledge updated. New offer? New prices? Update the brief. A project with stale knowledge is confidently wrong — which is worse than no project at all.</p>
+
+    <div class="note"><em>And here is the compounding bit: your projects make every OTHER module in this classroom stronger. Skills run on your real context. Artifacts get built on-brand the first time. Design (coming soon!) will pull from your brand memory. This is not a feature tour. It is the foundation everything else stands on.</em></div>
+
+    <div class="callout homework">
+      <span class="co-tag">📝 Your Homework</span>
+      <h4>Build your Business HQ project</h4>
+      <ul>
+        <li>All five steps above, including the Business Brief. The brief is the homework. The project is just where it lives.</li>
+        <li>Run the test drive: one zero-context request inside the project.</li>
+      </ul>
+      <p>Post in the community titled <span class="post-title">📝 HQ BUILT — [Your Name]</span>: a screenshot of your project, what you put in the knowledge, and the test-drive result.</p>
+    </div>
+
+    <div class="callout challenge">
+      <span class="co-tag">🔥 Your Challenge</span>
+      <h4>The Week at HQ</h4>
+      <p>For 7 days, do ALL your Claude work for your business inside your HQ project — no naked chats allowed. At the end of the week, post <span class="post-title">🔥 HQ WEEK — [Your Name]</span> with: the best thing you produced, the time you saved (estimate honestly), and one thing you added to project knowledge mid-week because you noticed Claude needed it.</p>
+      <p>That last part — noticing the gap and feeding the knowledge — is the difference between someone who USES Claude and someone who RUNS a system. Go build your headquarters. The team is waiting. 🏡✨</p>
+    </div>
+  `
+},
+{
+  id:"onboarding",
+  nav:"Onboarding Skill",
+  eyebrow:"Module 04",
+  title:"The Onboarding Skill",
+  lede:"The generator is a tool you visit. A skill is the same job living inside Claude — so onboarding your business (or a new client\u2019s) becomes something you can trigger any time, in any chat, without going anywhere. Build your Brain once, then re-run the process whenever you need it.",
+  body:`
+    <h3>What it is</h3>
+    <p>An installable skill that, once it\u2019s on, knows how to interview you (or a client) about a business and format the answers into clean Project knowledge. Say the word and Claude runs the whole onboarding — pulling out the offer, audience and voice and tidying it up — every time, the same way.</p>
+
+    <h3>Why a skill beats a one-off tool here</h3>
+    <p>Because you\u2019ll do this more than once. New offer, new client, a refresh six months from now — every time, the onboarding skill runs the same professional process without you rebuilding it. It\u2019s the difference between filling in one Business Brain and owning the repeatable method for filling in any. Especially handy if you work with clients.</p>
+
+    <h3>\u201CDo I need this if I\u2019ve already used the generator?\u201D</h3>
+    <p>If you only ever set up one Project, maybe not. But the moment you onboard a second business — a client, a new venture, a friend you\u2019re helping — this is the thing that makes it five minutes instead of starting over. Install it now, thank yourself later.</p>
+
+    <div class="callout homework">
+      <span class="co-tag">⚡ Your Move</span>
+      <h4>Install &amp; run it once</h4>
+      <p>Install the Business Onboarding skill, then run it on your own business as a test. Once you\u2019ve felt how smooth it is, you\u2019ll reach for it every time a new business needs loading into Claude. That\u2019s a repeatable system, not a one-off.</p>
+      <p>🔗 <strong>Link:</strong> <span style="color:var(--ink-soft)">[ paste the tool link here ]</span></p>
+    </div>
+  `
+},
+{
+  id:"skills",
+  nav:"Skills",
+  eyebrow:"Module 05",
+  title:"Skills: the employee handbook for your AI",
+  lede:"Picture this. Every Monday you sit down with a brilliant freelancer. And every Monday — every single one — she has total amnesia. You re-explain your niche. Your offer. Your voice. What a good sales email looks like. By the time she is up to speed, your coffee is cold and half your morning is gone.",
+  body:`
+    <p>That is what using AI without skills feels like. And it is exactly why most people quit — not because the tool is bad, but because the re-explaining tax is exhausting.</p>
+    <p>A <strong>skill</strong> ends that. It is a set of instructions, frameworks and standards you give Claude ONCE — and from then on, Claude follows it automatically whenever it is relevant. Think of it as an employee handbook for your AI. Write the handbook one time. Get handbook-quality work forever.</p>
+
+    <h3>What is inside these skills</h3>
+    <p>Here is the part I am genuinely proud of. These are not \u201Cyou are a helpful marketing assistant\u201D instructions — that gets you beige. Each skill in this course is built on the frameworks the legends of marketing actually used. The positioning thinkers. The direct-response greats. The launch strategists. The psychology of why people actually buy. All distilled into instructions Claude can execute on YOUR business.</p>
+    <p>The skill library covers, one page per skill:</p>
+    <ul>
+      <li><strong>Positioning</strong> — get so clear on who you serve and why you, that your content basically writes itself afterwards.</li>
+      <li><strong>Offers</strong> — package what you do so the value is obvious and the yes is easy.</li>
+      <li><strong>Pricing</strong> — price from strategy, not from a 2am scarcity spiral. We have all been there. No more.</li>
+      <li><strong>Content</strong> — hooks, posts and stories engineered to be read, saved and shared.</li>
+      <li><strong>Emails</strong> — welcome sequences, nurture, sales emails people do not hate receiving.</li>
+      <li><strong>Sales pages</strong> — every section, in the right order, doing its one job.</li>
+      <li><strong>Launches</strong> — the runway, the open cart, the close, all mapped before you post a thing.</li>
+    </ul>
+    <p>Every skill page gives you three things: what the skill does, how to set it up step by step (genuinely no tech skills needed — if you can copy and paste, you are overqualified), and the exact plain-English prompts to use with it.</p>
+
+    <h3>How to install a skill <span style="font-weight:400;font-size:16px;color:var(--ink-soft)">(the 4-step ritual)</span></h3>
+    <ol>
+      <li><strong>Pick ONE skill.</strong> Whichever one is your current bottleneck. Bleeding neck first. If you cannot decide, start with Positioning — it makes every other skill smarter.</li>
+      <li><strong>Follow the skill page step by step.</strong> Copy the skill instructions into Claude exactly as shown on the page — each page walks you through where they go and how to save them so Claude keeps them.</li>
+      <li><strong>Feed it YOUR business.</strong> The skill provides the framework; your details provide the magic. The page tells you exactly what to share — niche, offer, audience, voice.</li>
+      <li><strong>Run the prompts.</strong> Ask in plain English — \u201Cwrite my welcome sequence,\u201D \u201Cdraft my sales page\u201D — and watch Claude build it around your business, on the framework, in your voice. First time this works you WILL want to tell someone. That is what the community feed is for.</li>
+    </ol>
+
+    <div class="note"><em>The rule of this course: install one skill, USE it on something real, then install the next. A skill you installed but never ran is a gym membership, hun. We do not collect skills here. We deploy them.</em></div>
+
+    <div class="callout homework">
+      <span class="co-tag">📝 Your Homework</span>
+      <h4>This week</h4>
+      <ul>
+        <li>Install your first skill, following its page step by step.</li>
+        <li>Use it to produce ONE real asset for your business — an actual sales email, an actual offer outline, actual content. Real, as in: you could publish it tomorrow.</li>
+      </ul>
+      <p>Post in the community: which skill you installed, what you made with it, and how long it would have taken you alone. Title it <span class="post-title">📝 SKILL INSTALLED — [Your Name]</span>.</p>
+    </div>
+
+    <div class="callout challenge">
+      <span class="co-tag">🔥 Your Challenge</span>
+      <h4>The Full Stack Week</h4>
+      <p>Install THREE skills over the next 7 days and produce one real asset with each — for example: positioning statement Monday, offer one-pager Wednesday, sales email Friday. Post all three assets in one thread titled <span class="post-title">🔥 FULL STACK — [Your Name]</span>.</p>
+      <p>This challenge is the single clearest progression marker in the whole community — it is the moment members go from \u201Cusing AI sometimes\u201D to \u201Coperating with a team behind me.\u201D When you post yours, we celebrate accordingly. Bring it. 🏆</p>
+    </div>
+  `
+},
+{
+  id:"artifacts",
+  nav:"Artifacts",
+  eyebrow:"Module 06",
+  title:"The moment everything changes",
+  lede:"There is a before and an after in everyone\u2019s Claude journey, and this module is the line between them. Before: Claude writes things for you. Lovely. After: Claude BUILDS things for you. Working, clickable, send-the-link-to-your-audience things.",
+  body:`
+    <p>The first time you watch a quiz you described in two sentences assemble itself on screen, you will make a noise. Everyone makes the noise.</p>
+    <p>So what is an Artifact, technically? When you ask Claude to create something substantial — a document, a web page, an interactive tool — it opens in its own panel beside your chat instead of being buried in the conversation. That panel is the Artifact. It is a real, living thing: you can see it, click it, ask for changes, and watch it update in front of you.</p>
+
+    <div class="note">You\u2019re looking at one right now. This whole classroom is a single Artifact, built from a brief — exactly the thing you\u2019re about to learn to make.</div>
+
+    <h3>What you can build <span style="font-weight:400;font-size:16px;color:var(--ink-soft)">(steal these ideas, please)</span></h3>
+    <ul>
+      <li><strong>A lead magnet quiz</strong> — \u201CWhat\u2019s Your Money Personality?\u201D, \u201CWhich Launch Style Fits You?\u201D — with questions, scoring and results pages. The classic list-builder, minus the $40-a-month quiz software.</li>
+      <li><strong>A calculator</strong> — pricing calculators, ROI calculators, \u201Chow much is DIY-ing this costing you\u201D calculators. Interactive proof of your value.</li>
+      <li><strong>A simple landing page</strong> — headline, offer, button. Live in an afternoon, not in \u201Cwhen my designer has availability.\u201D</li>
+      <li><strong>Client-facing trackers and templates</strong> — habit trackers, content planners, onboarding checklists your clients can actually use.</li>
+      <li><strong>Polished documents</strong> — workbooks, guides and one-pagers, formatted and ready to share.</li>
+    </ul>
+
+    <h3>How to ask for an Artifact <span style="font-weight:400;font-size:16px;color:var(--ink-soft)">(the brief formula)</span></h3>
+    <p>Everything from the Prompts module applies — context, task, tone, format, examples — plus one new layer: describe it like you are briefing a designer who cannot read your mind. Cover these four things:</p>
+    <ul>
+      <li><strong>What it is:</strong> \u201Can interactive quiz,\u201D \u201Ca one-page landing page,\u201D \u201Ca pricing calculator.\u201D</li>
+      <li><strong>Who it is for and what it should do:</strong> \u201Cfor burnt-out service providers; it scores their answers and shows one of 4 results, each recommending my audit offer.\u201D</li>
+      <li><strong>The vibe:</strong> colours, mood, energy. \u201CSoft neutrals, elegant, lots of breathing room\u201D lands very differently to \u201Cbold, bright, fun.\u201D</li>
+      <li><strong>The content:</strong> your actual questions, your actual copy, your actual prices. Claude can draft these too, but your real material makes it yours.</li>
+    </ul>
+    <p>Then — and this is the bit beginners miss — you ITERATE. The first version is a first draft, same as ever. \u201CMake the buttons bigger.\u201D \u201CWarmer colours.\u201D \u201CAdd a question about budget.\u201D \u201CThe results page needs my booking link.\u201D Plain English the whole way. No code is ever your job.</p>
+
+    <div class="note"><em>And when it is ready? Artifacts can be shared with a link, so the quiz you built on Tuesday can be in your Instagram bio on Wednesday. Build-to-published in one day used to be a fantasy. Now it is a homework assignment. Speaking of which —</em></div>
+
+    <div class="callout homework">
+      <span class="co-tag">📝 Your Homework</span>
+      <h4>Build your first Artifact</h4>
+      <ul>
+        <li>Recommended first build: a 5-question lead magnet quiz for YOUR audience, with 3–4 results that each point to one of your offers. (A calculator or landing page is fine too — pick what your business needs most.)</li>
+        <li>Go at least THREE rounds of revisions in plain English. The iteration is the skill we are training, not just the artifact.</li>
+      </ul>
+      <p>Post a screenshot in the community titled <span class="post-title">📝 FIRST BUILD — [Your Name]</span>, with the brief you used. Briefs are gold for everyone else — share generously.</p>
+    </div>
+
+    <div class="callout challenge">
+      <span class="co-tag">🔥 Your Challenge</span>
+      <h4>Ship It</h4>
+      <p>Do not just build the thing, PUBLISH the thing. Share your Artifact link in the community titled <span class="post-title">🔥 SHIPPED — [Your Name]</span>, then put it somewhere real: your bio, your stories, your email list. Report back within a week: how many people touched it, and what happened?</p>
+      <p>In this community, \u201CI built something\u201D is lovely, but \u201CI shipped something and 14 people took my quiz\u201D is a progression milestone — that is the post that gets the confetti. Build. Ship. Report. Repeat. 🚢</p>
+    </div>
+  `
+},
+{
+  id:"github",
+  nav:"Host on GitHub",
+  eyebrow:"Bonus",
+  title:"Host your Artifact on GitHub",
+  lede:"You built the thing. Now let\u2019s put it on the actual internet — for free, with a real link you control. This is how you take an Artifact out of Claude and host it externally, so it\u2019s easy to update and share.",
+  body:`
+    <h3>Before you start: prep the file</h3>
+    <ul>
+      <li>Once you\u2019ve created the artifact, <strong>download the HTML file</strong> to your home screen / desktop.</li>
+      <li>Save a copy in the team Drive folder: <a href="https://drive.google.com/drive/folders/1bFnJQBzR-YtZZJOpxj0oSDn8i19zyiTf?usp=drive_link" target="_blank" rel="noopener">open the Drive folder here</a>.</li>
+      <li>Now rename the file <strong>on the desktop only</strong> to <code style="background:var(--paper-2);padding:2px 7px;border-radius:6px;font-size:15px;">index.html</code>. (GitHub Pages looks for that exact name.)</li>
+    </ul>
+
+    <div class="note"><strong>Already have the account set up?</strong> If we\u2019ve already created the GitHub account together, skip Step 1 and log in to our account at <a href="https://github.com/login" target="_blank" rel="noopener">github.com/login</a> using Google (the Respark Google login).</div>
+
+    <h3>The steps</h3>
+    <ol>
+      <li>
+        <strong>Create a GitHub account.</strong> Go to the GitHub website and sign up for a free account.
+        <a class="step-link" href="https://loom.com/share/7b408ec6a5144bd6b618468d5330dfee?t=25" target="_blank" rel="noopener">▶ watch 0:25</a>
+      </li>
+      <li>
+        <strong>Create a new repository.</strong> Navigate to \u201CRepositories\u201D → \u201CNew repository.\u201D Name it (e.g. \u201CSpiritual Business Clarity\u201D), set it to \u201CPublic,\u201D check \u201CAdd a README,\u201D and click \u201CCreate repository.\u201D
+        <a class="step-link" href="https://loom.com/share/7b408ec6a5144bd6b618468d5330dfee?t=46" target="_blank" rel="noopener">▶ watch 0:46</a>
+      </li>
+      <li>
+        <strong>Prepare your artifact.</strong> Download the artifact file you want to host and rename it to \u201Cindex.html.\u201D
+        <a class="step-link" href="https://loom.com/share/7b408ec6a5144bd6b618468d5330dfee?t=76" target="_blank" rel="noopener">▶ watch 1:16</a>
+      </li>
+      <li>
+        <strong>Upload the artifact.</strong> In your new repository, click \u201CUpload files,\u201D select the \u201Cindex.html\u201D file you just renamed, and click \u201CCommit changes.\u201D
+        <a class="step-link" href="https://loom.com/share/7b408ec6a5144bd6b618468d5330dfee?t=128" target="_blank" rel="noopener">▶ watch 2:08</a>
+      </li>
+      <li>
+        <strong>Configure GitHub Pages.</strong> Go to \u201CSettings\u201D → \u201CPages.\u201D Set the source to \u201CBranch: main\u201D and \u201CRoot,\u201D then click \u201CSave.\u201D
+        <a class="step-link" href="https://loom.com/share/7b408ec6a5144bd6b618468d5330dfee?t=144" target="_blank" rel="noopener">▶ watch 2:24</a>
+      </li>
+      <li>
+        <strong>Access your live URL.</strong> Wait a few moments for the page to go live. Your URL will look like <code style="background:var(--paper-2);padding:2px 7px;border-radius:6px;font-size:14px;">https://&lt;your-username&gt;.github.io/&lt;repository-name&gt;</code>. Ours will be <strong>https://resparkskool.github.io/&lt;repository-name&gt;</strong>.
+        <a class="step-link" href="https://loom.com/share/7b408ec6a5144bd6b618468d5330dfee?t=206" target="_blank" rel="noopener">▶ watch 3:26</a>
+      </li>
+      <li>
+        <strong>Update your artifact later.</strong> To update it, go to your repository, click the existing \u201Cindex.html\u201D file, delete the old file and upload the new version.
+        <a class="step-link" href="https://loom.com/share/7b408ec6a5144bd6b618468d5330dfee?t=252" target="_blank" rel="noopener">▶ watch 4:12</a>
+      </li>
+    </ol>
+
+    <h3>Cautionary notes</h3>
+    <ul>
+      <li>Ensure the repository is set to \u201CPublic\u201D if you want others to access it.</li>
+      <li>Be cautious when deleting files — make sure you have backups if necessary.</li>
+    </ul>
+
+    <h3>Tips for efficiency</h3>
+    <ul>
+      <li>Use descriptive names for your repositories to easily identify them later.</li>
+      <li>Regularly check for updates to your artifacts to keep them current.</li>
+      <li>Familiarise yourself with GitHub\u2019s interface to navigate quickly.</li>
+    </ul>
+
+    <div class="callout challenge">
+      <span class="co-tag">🎓 You made it</span>
+      <h4>That\u2019s the whole path</h4>
+      <p>From \u201Cwhat is this thing\u201D to a live, shareable tool on the internet that you built and hosted yourself. Mark this module complete, then go do the work — the classroom only counts when the homework ships. 🚀</p>
+    </div>
+  `
+}
+];
+
+/* ============================================================
+   APP STATE + RENDER
+   ============================================================ */
+const KEY_DONE = "cc_done_v1";
+const KEY_LAST = "cc_last_v1";
+
+let done = new Set((Store.get(KEY_DONE)||"").split(",").filter(Boolean));
+let current = 0;
+const savedLast = Store.get(KEY_LAST);
+if(savedLast){ const i = MODULES.findIndex(m=>m.id===savedLast); if(i>=0) current = i; }
+
+const navList = document.getElementById("navList");
+const lesson  = document.getElementById("lesson");
+const pctEl   = document.getElementById("pct");
+const barEl   = document.getElementById("bar");
+const pathFill= document.getElementById("pathFill");
+
+function saveDone(){ Store.set(KEY_DONE, Array.from(done).join(",")); }
+
+function buildNav(){
+  navList.innerHTML = "";
+  MODULES.forEach((m,i)=>{
+    const li = document.createElement("li");
+    li.className = "nav-item" + (done.has(m.id)?" done":"") + (i===current?" active":"");
+    li.innerHTML = `<button class="nav-btn" data-i="${i}">
+        <span class="node">${check}</span>
+        <span class="nav-num">${i+1<10?"0"+(i+1):i+1}</span>
+        <span class="nav-label">${m.nav}</span>
+      </button>`;
+    navList.appendChild(li);
+  });
+  navList.querySelectorAll(".nav-btn").forEach(b=>{
+    b.addEventListener("click",()=>{ go(+b.dataset.i); closeNav(); });
+  });
+}
+
+function updateProgress(){
+  const total = MODULES.length;
+  const n = MODULES.filter(m=>done.has(m.id)).length;
+  const p = Math.round(n/total*100);
+  pctEl.textContent = p+"%";
+  barEl.style.width = p+"%";
+  // fill the journey path proportionally
+  pathFill.style.height = (n===0 ? 0 : (n/total*100)) + "%";
+}
+
+function renderLesson(){
+  const m = MODULES[current];
+  const isDone = done.has(m.id);
+  lesson.innerHTML = `
+    <p class="eyebrow">${m.eyebrow}</p>
+    <h1 class="title">${m.title}</h1>
+    <p class="lede">${m.lede}</p>
+    <hr class="divider">
+    ${m.body}
+    <div class="lesson-foot">
+      <button class="complete-btn ${isDone?"is-done":""}" id="completeBtn">
+        ${isDone?checkW+"<span>Completed</span>":"<span>Mark module complete</span>"}
+      </button>
+      <div class="foot-nav">
+        <button id="prevBtn" ${current===0?"disabled":""}>← Previous</button>
+        <button id="nextBtn" ${current===MODULES.length-1?"disabled":""}>Next →</button>
+      </div>
+    </div>
+    <div class="finish" id="finish">
+      <h4>🎉 Every module complete</h4>
+      <p>You\u2019ve gone from \u201Cwhat is this thing\u201D to building and hosting your own tool. Now go run the homework — that\u2019s where it becomes real.</p>
+    </div>
+  `;
+
+  // wire footer
+  document.getElementById("completeBtn").addEventListener("click", toggleComplete);
+  const prev = document.getElementById("prevBtn");
+  const next = document.getElementById("nextBtn");
+  if(prev) prev.addEventListener("click",()=>go(current-1));
+  if(next) next.addEventListener("click",()=>go(current+1));
+
+  // wire any copy-prompt buttons
+  lesson.querySelectorAll("[data-copy]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const card = btn.closest(".prompt-card");
+      const text = card.querySelector(".pc-body").innerText;
+      copyText(text, btn);
+    });
+  });
+
+  // wire the prompt builder if present
+  if(m.id==="prompts") wireBuilder();
+
+  // finish banner
+  if(MODULES.every(x=>done.has(x.id))) document.getElementById("finish").classList.add("show");
+
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function go(i){
+  if(i<0||i>=MODULES.length) return;
+  current = i;
+  Store.set(KEY_LAST, MODULES[current].id);
+  buildNav();
+  renderLesson();
+}
+
+function toggleComplete(){
+  const id = MODULES[current].id;
+  if(done.has(id)) done.delete(id); else done.add(id);
+  saveDone();
+  buildNav();
+  updateProgress();
+  const m = MODULES[current], isDone = done.has(id);
+  const btn = document.getElementById("completeBtn");
+  btn.className = "complete-btn " + (isDone?"is-done":"");
+  btn.innerHTML = isDone ? checkW+"<span>Completed</span>" : "<span>Mark module complete</span>";
+  document.getElementById("finish").classList.toggle("show", MODULES.every(x=>done.has(x.id)));
+  // auto-advance for momentum (unless on last module)
+  if(isDone && current < MODULES.length-1){
+    setTimeout(()=>go(current+1), 550);
+  }
+}
+
+/* ---- clipboard with fallback ---- */
+function copyText(text, btn){
+  const ok = ()=>{
+    const original = btn.innerHTML;
+    btn.classList.add("copied");
+    btn.innerHTML = checkW+"<span>Copied!</span>";
+    setTimeout(()=>{ btn.classList.remove("copied"); btn.innerHTML = original; }, 1600);
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(ok).catch(()=>fallbackCopy(text,ok));
+  } else { fallbackCopy(text, ok); }
+}
+function fallbackCopy(text, ok){
+  const ta = document.createElement("textarea");
+  ta.value = text; ta.style.position="fixed"; ta.style.opacity="0";
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand("copy"); ok(); }catch(e){}
+  document.body.removeChild(ta);
+}
+
+/* ============================================================
+   PROMPT BUILDER
+   ============================================================ */
+function wireBuilder(){
+  const ids = ["role","context","task","tone","format","examples"];
+  const fields = {};
+  ids.forEach(k=> fields[k] = document.getElementById("b-"+k));
+  const out = document.getElementById("b-output");
+
+  function assemble(){
+    const v = {};
+    ids.forEach(k=> v[k] = (fields[k].value||"").trim());
+    let parts = [];
+    if(v.role){ parts.push("Act as " + v.role + "."); }
+    if(v.context){ parts.push(v.context); }
+    if(v.task){ parts.push(v.task); }
+    if(v.tone){ parts.push("Tone & style: " + v.tone); }
+    if(v.format){ parts.push("Format: " + v.format); }
+    if(v.examples){ parts.push(v.examples); }
+    if(parts.length===0){
+      out.innerHTML = '<span class="ph">Start filling fields above and your prompt appears here…</span>';
+    } else {
+      out.textContent = parts.join("\n\n");
+    }
+  }
+  ids.forEach(k=> fields[k].addEventListener("input", assemble));
+
+  document.getElementById("b-load").addEventListener("click",()=>{
+    fields.role.value    = "a warm, conversion-savvy email copywriter";
+    fields.context.value = "I'm a money mindset coach for women freelancers.";
+    fields.task.value    = "Write a welcome email for new subscribers who downloaded my free budgeting template.";
+    fields.tone.value    = "Big-sister-who-has-her-life-together: warm, direct, zero finance-bro energy.";
+    fields.format.value  = "Under 200 words, with one clear next step at the end.";
+    fields.examples.value= "Here's a past email my list loved, match this voice: [paste your example here]";
+    assemble();
+  });
+  document.getElementById("b-clear").addEventListener("click",()=>{
+    ids.forEach(k=> fields[k].value="");
+    assemble();
+  });
+  document.getElementById("b-copy").addEventListener("click",()=>{
+    const text = out.textContent.trim();
+    if(!text || out.querySelector(".ph")) return;
+    copyText(text, document.getElementById("b-copy"));
+  });
+
+  assemble();
+}
+
+/* ============================================================
+   MOBILE NAV
+   ============================================================ */
+const hamburger = document.getElementById("hamburger");
+const scrim = document.getElementById("scrim");
+function openNav(){ document.body.classList.add("nav-open"); hamburger.setAttribute("aria-expanded","true"); }
+function closeNav(){ document.body.classList.remove("nav-open"); hamburger.setAttribute("aria-expanded","false"); }
+hamburger.addEventListener("click",()=> document.body.classList.contains("nav-open")?closeNav():openNav());
+scrim.addEventListener("click", closeNav);
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeNav(); });
+
+/* ---- reset ---- */
+document.getElementById("reset").addEventListener("click",()=>{
+  done.clear(); saveDone(); buildNav(); updateProgress(); renderLesson();
+});
+
+/* ============================================================
+   INIT
+   ============================================================ */
+buildNav();
+updateProgress();
+renderLesson();
+</script>
+</body>
+</html>
